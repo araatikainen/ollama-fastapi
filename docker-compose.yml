@@ -1,0 +1,77 @@
+services:
+  ollama:
+    build:
+      context: ./ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-vol:/ollama
+    networks:
+      - default-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
+    entrypoint: ["/usr/bin/bash", "/pull-llama.sh"]
+
+  ollama-vision:
+      build:
+        context: ./ollama-vision
+      ports:
+        - "11435:11435"
+      volumes:
+        - ollama-vision-vol:/ollama
+      networks:
+        - default-net
+      deploy:
+        resources:
+          reservations:
+            devices:
+              - driver: nvidia
+                capabilities: [gpu]
+      environment:
+        OLLAMA_HOST: http://ollama-vision:11435
+        OLLAMA_VISION_MODEL: ${OLLAMA_VISION_MODEL}
+      entrypoint: ["/usr/bin/bash", "/pull-llama-vision.sh"]
+
+  backend:
+    build:
+      context: ./backend
+    container_name: backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    networks:
+      - default-net
+    env_file:
+    - .env
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+    networks:
+      - default-net
+    restart: always
+    env_file:
+    - .env
+
+networks:
+  default-net:
+    driver: bridge
+
+volumes:
+  ollama-vol:
+    driver: local
+  ollama-vision-vol:
+    driver: local
