@@ -42,7 +42,7 @@ def chat_image(data:dict):
                 model=os.getenv("OLLAMA_VISION_MODEL"),
                 temperature=0.5,
                 )
-        messages = format_history(data["messages"])
+        messages = format_history(data["messages"], vision=True)
         llm = llm.bind(images=[str(data["image"])])
         result = llm.invoke(messages)
         print("res", result)
